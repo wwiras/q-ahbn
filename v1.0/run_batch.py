@@ -312,6 +312,10 @@ def run_single(
     summary.update(sim.get_resource_metrics())
     if hasattr(controller, "get_learning_summary"):
         summary.update(controller.get_learning_summary())
+        # print("\nQ SUMMARY")
+        # print(controller.get_learning_summary())
+        # print()
+        
     if enable_adaptive_trace:
         summary["adaptive_trace_rows"] = sim.adaptive_trace_rows
     return summary
@@ -560,13 +564,64 @@ def exp10(cfg: dict) -> tuple[list[dict], list]:
                         "duplicates": summary["duplicates"],
                         "total_forwards": summary["total_forwards"],
                         "recovery_time": summary["recovery_time"],
+                        
+                        # ==========================
+                        # Q-AHBN Learning Metrics
+                        # ==========================
+                        
                         "q_table_states": summary.get("q_table_states"),
                         "q_updates": summary.get("q_updates"),
+                        "q_decisions": summary.get("q_decisions"),
+
                         "q_mean_reward": summary.get("q_mean_reward"),
                         "q_recent_reward": summary.get("q_recent_reward"),
                         "q_cumulative_reward": summary.get("q_cumulative_reward"),
+
                         "q_epsilon_final": summary.get("q_epsilon_final"),
                         "q_unique_actions": summary.get("q_unique_actions"),
+
+                        # Raw action counts
+                        "q_ahbn_base": summary.get("q_ahbn_base"),
+                        "q_more_structured": summary.get("q_more_structured"),
+                        "q_more_gossip": summary.get("q_more_gossip"),
+                        "q_duplicate_suppression": summary.get("q_duplicate_suppression"),
+                        "q_recovery_push": summary.get("q_recovery_push"),
+                        "q_resource_conservative": summary.get("q_resource_conservative"),
+
+                        # Percentages
+                        "q_pct_ahbn_base": summary.get("q_pct_ahbn_base"),
+                        "q_pct_more_structured": summary.get("q_pct_more_structured"),
+                        "q_pct_more_gossip": summary.get("q_pct_more_gossip"),
+                        "q_pct_duplicate_suppression": summary.get("q_pct_duplicate_suppression"),
+                        "q_pct_recovery_push": summary.get("q_pct_recovery_push"),
+                        "q_pct_resource_conservative": summary.get("q_pct_resource_conservative"),
+
+                        # "q_table_states": summary.get("q_table_states"),
+                        # "q_updates": summary.get("q_updates"),
+                        # "q_decisions": summary.get("q_decisions"),
+
+                        # "q_mean_reward": summary.get("q_mean_reward"),
+                        # "q_recent_reward": summary.get("q_recent_reward"),
+                        # "q_cumulative_reward": summary.get("q_cumulative_reward"),
+
+                        # "q_epsilon_final": summary.get("q_epsilon_final"),
+                        # "q_unique_actions": summary.get("q_unique_actions"),
+                        
+                        # # Raw action counts
+                        # "q_ahbn_base": summary.get("q_ahbn_base"),
+                        # "q_more_structured": summary.get("q_more_structured"),
+                        # "q_more_gossip": summary.get("q_more_gossip"),
+                        # "q_duplicate_suppression": summary.get("q_duplicate_suppression"),
+                        # "q_recovery_push": summary.get("q_recovery_push"),
+                        # "q_resource_conservative": summary.get("q_resource_conservative"),
+
+                        # # Percentages
+                        # "q_pct_ahbn_base": summary.get("q_pct_ahbn_base"),
+                        # "q_pct_more_structured": summary.get("q_pct_more_structured"),
+                        # "q_pct_more_gossip": summary.get("q_pct_more_gossip"),
+                        # "q_pct_duplicate_suppression": summary.get("q_pct_duplicate_suppression"),
+                        # "q_pct_recovery_push": summary.get("q_pct_recovery_push"),
+                        # "q_pct_resource_conservative": summary.get("q_pct_resource_conservative"),
                     }
                 )
 
@@ -644,13 +699,40 @@ def exp11(cfg: dict) -> tuple[list[dict], list]:
                         "fanout_change_count": summary["fanout_change_count"],
                         "adaptation_event_count": summary["adaptation_event_count"],
                         "adaptation_rate": summary["adaptation_rate"],
+                       
+                        # ==========================
+                        # Q-AHBN Learning Metrics
+                        # ==========================
+
                         "q_table_states": summary.get("q_table_states"),
                         "q_updates": summary.get("q_updates"),
+                        "q_decisions": summary.get("q_decisions"),
+
                         "q_mean_reward": summary.get("q_mean_reward"),
                         "q_recent_reward": summary.get("q_recent_reward"),
                         "q_cumulative_reward": summary.get("q_cumulative_reward"),
+
                         "q_epsilon_final": summary.get("q_epsilon_final"),
                         "q_unique_actions": summary.get("q_unique_actions"),
+
+                        # Raw action counts
+                        "q_ahbn_base": summary.get("q_ahbn_base"),
+                        "q_more_structured": summary.get("q_more_structured"),
+                        "q_more_gossip": summary.get("q_more_gossip"),
+                        "q_duplicate_suppression": summary.get("q_duplicate_suppression"),
+                        "q_recovery_push": summary.get("q_recovery_push"),
+                        "q_resource_conservative": summary.get("q_resource_conservative"),
+
+                        # Percentages
+                        "q_pct_ahbn_base": summary.get("q_pct_ahbn_base"),
+                        "q_pct_more_structured": summary.get("q_pct_more_structured"),
+                        "q_pct_more_gossip": summary.get("q_pct_more_gossip"),
+                        "q_pct_duplicate_suppression": summary.get("q_pct_duplicate_suppression"),
+                        "q_pct_recovery_push": summary.get("q_pct_recovery_push"),
+                        "q_pct_resource_conservative": summary.get("q_pct_resource_conservative"),
+                       
+                       
+                       
                     }
                 )
 
@@ -725,13 +807,40 @@ def exp12(cfg: dict) -> tuple[list[dict], list]:
                         "strong_forward_share": summary["strong_forward_share"],
                         "medium_forward_share": summary["medium_forward_share"],
                         "weak_forward_share": summary["weak_forward_share"],
+                       
+                       
+                        # ==========================
+                        # Q-AHBN Learning Metrics
+                        # ==========================
+
                         "q_table_states": summary.get("q_table_states"),
                         "q_updates": summary.get("q_updates"),
+                        "q_decisions": summary.get("q_decisions"),
+
                         "q_mean_reward": summary.get("q_mean_reward"),
                         "q_recent_reward": summary.get("q_recent_reward"),
                         "q_cumulative_reward": summary.get("q_cumulative_reward"),
+
                         "q_epsilon_final": summary.get("q_epsilon_final"),
                         "q_unique_actions": summary.get("q_unique_actions"),
+
+                        # Raw action counts
+                        "q_ahbn_base": summary.get("q_ahbn_base"),
+                        "q_more_structured": summary.get("q_more_structured"),
+                        "q_more_gossip": summary.get("q_more_gossip"),
+                        "q_duplicate_suppression": summary.get("q_duplicate_suppression"),
+                        "q_recovery_push": summary.get("q_recovery_push"),
+                        "q_resource_conservative": summary.get("q_resource_conservative"),
+
+                        # Percentages
+                        "q_pct_ahbn_base": summary.get("q_pct_ahbn_base"),
+                        "q_pct_more_structured": summary.get("q_pct_more_structured"),
+                        "q_pct_more_gossip": summary.get("q_pct_more_gossip"),
+                        "q_pct_duplicate_suppression": summary.get("q_pct_duplicate_suppression"),
+                        "q_pct_recovery_push": summary.get("q_pct_recovery_push"),
+                        "q_pct_resource_conservative": summary.get("q_pct_resource_conservative"),
+                       
+                       
                     }
                 )
 

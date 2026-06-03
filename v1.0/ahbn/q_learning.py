@@ -23,17 +23,8 @@ class QAHBNController:
     """
     Q-AHBN meta-controller.
 
-    Important design choice:
-    - AHBN remains intact.
-    - The wrapped AHBN controller still performs EWMA, sigmoid weighting, mode selection,
-      fanout selection, and tau computation.
-    - Q-learning only learns a small meta-action that adjusts AHBN's output.
-
-    This is suitable for Phase 1 Python validation:
-    - Q-table updates
-    - rewards are recorded
-    - actions vary over time
-    - learned meta-policy can be compared against AHBN using the same simulator
+    AHBN remains intact.
+    Q-learning only learns small meta-actions that adjust AHBN's output.
     """
 
     def __init__(self, base_controller: Any, cfg: dict | None = None, seed: int = 42) -> None:
@@ -44,18 +35,25 @@ class QAHBNController:
 
         self.alpha: float = float(self.cfg.get("alpha", 0.25))
         self.gamma: float = float(self.cfg.get("gamma", 0.90))
-        self.epsilon: float = float(self.cfg.get("epsilon", 0.25))
+        self.epsilon: float = float(self.cfg.get("epsilon", 0.30))
         self.epsilon_min: float = float(self.cfg.get("epsilon_min", 0.03))
         self.epsilon_decay: float = float(self.cfg.get("epsilon_decay", 0.995))
 
-        # Reward weights. Keep these explicit so the thesis can explain them.
-        self.w_dup: float = float(self.cfg.get("w_dup", 2.00))
-        self.w_latency: float = float(self.cfg.get("w_latency", 0.75))
-        self.w_load: float = float(self.cfg.get("w_load", 0.35))
-        self.w_redundancy: float = float(self.cfg.get("w_redundancy", 1.00))
-        self.w_churn: float = float(self.cfg.get("w_churn", 0.30))
-        self.w_capacity: float = float(self.cfg.get("w_capacity", 0.35))
-        self.w_delivery_proxy: float = float(self.cfg.get("w_delivery_proxy", 0.50))
+        # Reward weights.
+        # Important change:
+        # Delivery / recovery pressure is now stronger than duplicate suppression.
+        self.w_delivery_proxy: float = float(self.cfg.get("w_delivery_proxy", 5.00))
+        self.w_dup: float = float(self.cfg.get("w_dup", 0.50))
+        self.w_latency: float = float(self.cfg.get("w_latency", 0.30))
+        self.w_load: float = float(self.cfg.get("w_load", 0.20))
+        self.w_redundancy: float = float(self.cfg.get("w_redundancy", 0.20))
+        self.w_churn: float = float(self.cfg.get("w_churn", 0.20))
+        self.w_capacity: float = float(self.cfg.get("w_capacity", 0.20))
+
+        # Bonus terms for unstable situations.
+        self.w_recovery_bonus: float = float(self.cfg.get("w_recovery_bonus", 2.00))
+        self.high_churn_threshold: float = float(self.cfg.get("high_churn_threshold", 0.20))
+        self.high_latency_threshold: float = float(self.cfg.get("high_latency_threshold", 1.20))
 
         # Normalizers prevent large raw values from dominating the reward.
         self.latency_ref: float = float(self.cfg.get("latency_ref", max(1.0, self.params.l0)))
@@ -73,9 +71,11 @@ class QAHBNController:
         self.q_table: DefaultDict[StateKey, Dict[ActionName, float]] = defaultdict(
             lambda: {a.name: 0.0 for a in self.actions}
         )
+
         self.prev: Dict[int, Tuple[StateKey, ActionName]] = {}
         self.reward_history: List[float] = []
         self.action_history: List[ActionName] = []
+
         self.update_count: int = 0
         self.decision_count: int = 0
 
@@ -112,9 +112,11 @@ class QAHBNController:
         if sid in self.prev:
             prev_s, prev_a = self.prev[sid]
             reward = self.compute_reward(state)
+
             best_next = max(self.q_table[s].values())
             old_q = self.q_table[prev_s][prev_a]
             new_q = old_q + self.alpha * (reward + self.gamma * best_next - old_q)
+
             self.q_table[prev_s][prev_a] = new_q
             self.reward_history.append(reward)
             self.update_count += 1
@@ -129,6 +131,7 @@ class QAHBNController:
         self.prev[sid] = (s, action_name)
         self.action_history.append(action_name)
         self.decision_count += 1
+
         self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
 
         state.q_state = "|".join(s)
@@ -155,12 +158,28 @@ class QAHBNController:
     def choose_action(self, s: StateKey) -> ActionName:
         if self.rng.random() < self.epsilon:
             return self.rng.choice(self.actions).name
+
         qvals = self.q_table[s]
         max_q = max(qvals.values())
         best = [a for a, q in qvals.items() if q == max_q]
         return self.rng.choice(best)
 
     def compute_reward(self, state) -> float:
+        """
+        Reward redesign.
+
+        Previous behavior:
+            Q-AHBN reduced duplicates but also reduced delivery.
+
+        New behavior:
+            Prioritize delivery / recovery pressure first.
+            Penalize duplicates, latency, forwarding pressure, churn, and capacity pressure second.
+
+        Interpretation:
+            The learner should not simply minimize forwarding.
+            It should maintain dissemination effectiveness while reducing unnecessary overhead.
+        """
+
         dup = min(1.0, max(0.0, float(state.d_hat)))
         lat = min(2.0, max(0.0, float(state.l_hat) / max(0.1, self.latency_ref)))
         load = min(2.0, max(0.0, float(state.u_hat) / max(0.1, self.load_ref)))
@@ -168,12 +187,16 @@ class QAHBNController:
         churn = min(2.0, max(0.0, float(state.rho_hat)))
         cap = min(2.0, max(0.0, float(getattr(state, "c_hat", 0.0))))
 
-        # Local delivery pressure: high latency/churn means dissemination is difficult,
-        # so a small positive term prevents the learner from always selecting minimum fanout.
-        delivery_pressure = min(1.0, 0.5 * lat + 0.5 * churn)
+        # Local delivery proxy:
+        # If duplication is low and latency is controlled, dissemination is likely healthier.
+        delivery_proxy = max(0.0, 1.0 - (0.50 * dup + 0.35 * min(1.0, lat) + 0.15 * min(1.0, churn)))
+
+        # Recovery pressure:
+        # When churn or latency is high, the system should avoid becoming too conservative.
+        recovery_pressure = min(1.0, 0.5 * min(1.0, lat) + 0.5 * min(1.0, churn))
 
         reward = (
-            self.w_delivery_proxy * delivery_pressure
+            self.w_delivery_proxy * delivery_proxy
             - self.w_dup * dup
             - self.w_latency * lat
             - self.w_load * load
@@ -181,16 +204,34 @@ class QAHBNController:
             - self.w_churn * churn
             - self.w_capacity * cap
         )
+
+        # Bonus under dynamic conditions.
+        # This encourages the learner to maintain dissemination capability during failure/churn.
+        if churn >= self.high_churn_threshold or lat >= self.high_latency_threshold:
+            reward += self.w_recovery_bonus * recovery_pressure
+
         return reward
 
     def apply_action(self, state, action_name: ActionName) -> None:
         action = next(a for a in self.actions if a.name == action_name)
         p = self.params
 
-        state.weight = max(p.min_weight, min(p.max_weight, float(state.weight) + action.weight_delta))
+        state.weight = max(
+            p.min_weight,
+            min(p.max_weight, float(state.weight) + action.weight_delta),
+        )
+
         state.mode = "gossip" if state.weight >= p.mode_threshold else "cluster"
-        state.fanout = max(p.min_fanout, min(p.max_fanout, int(state.fanout) + action.fanout_delta))
-        state.tau = max(p.tau_min, min(p.tau_max, float(state.tau) * action.tau_multiplier))
+
+        state.fanout = max(
+            p.min_fanout,
+            min(p.max_fanout, int(state.fanout) + action.fanout_delta),
+        )
+
+        state.tau = max(
+            p.tau_min,
+            min(p.tau_max, float(state.tau) * action.tau_multiplier),
+        )
 
     def get_learning_summary(self) -> dict:
         if self.reward_history:
@@ -207,6 +248,8 @@ class QAHBNController:
         for a in self.action_history:
             counts[a] = counts.get(a, 0) + 1
 
+        total_actions = max(1, sum(counts.values()))
+
         return {
             "q_table_states": len(self.q_table),
             "q_updates": self.update_count,
@@ -216,5 +259,20 @@ class QAHBNController:
             "q_cumulative_reward": cumulative_reward,
             "q_epsilon_final": self.epsilon,
             "q_unique_actions": len(counts),
-            "q_action_counts": counts,
+
+            # Raw action counts
+            "q_ahbn_base": counts.get("ahbn_base", 0),
+            "q_more_structured": counts.get("more_structured", 0),
+            "q_more_gossip": counts.get("more_gossip", 0),
+            "q_duplicate_suppression": counts.get("duplicate_suppression", 0),
+            "q_recovery_push": counts.get("recovery_push", 0),
+            "q_resource_conservative": counts.get("resource_conservative", 0),
+
+            # Action percentages
+            "q_pct_ahbn_base": counts.get("ahbn_base", 0) / total_actions,
+            "q_pct_more_structured": counts.get("more_structured", 0) / total_actions,
+            "q_pct_more_gossip": counts.get("more_gossip", 0) / total_actions,
+            "q_pct_duplicate_suppression": counts.get("duplicate_suppression", 0) / total_actions,
+            "q_pct_recovery_push": counts.get("recovery_push", 0) / total_actions,
+            "q_pct_resource_conservative": counts.get("resource_conservative", 0) / total_actions,
         }
