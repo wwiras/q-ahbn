@@ -1,0 +1,88 @@
+experiment: exp10
+
+seed: 42
+runs_per_setting: 20
+
+num_nodes: 100
+topology_type: er
+edge_prob: 0.08
+use_topology_cache: true
+
+base_delay: 1.0
+jitter: 0.2
+message_source: 0
+
+fanout: 3
+num_clusters: 4
+
+strategies:
+  - gossip
+  - cluster
+  - ahbn
+
+failure_modes:
+  - node_failure
+  - ch_failure
+  - overload
+
+# failure:
+#   enabled: true
+#   mode: node_failure
+#   trigger_time: 3.0
+#   target_selection: random
+#   target_count: 1
+#   overload_delay_multiplier: 3.0
+#   overload_duration: 0.0
+
+failure:
+  enabled: true
+  mode: node_failure
+  trigger_time: 1.0
+  target_selection: random
+  target_count: 1
+  overload_delay_multiplier: 3.0
+  overload_duration: 0.0
+
+ahbn:
+  default_fanout: 3
+  adaptive_fanout: true
+  hybrid_mode: true
+  use_tau_gate: true
+  min_cluster_targets: 1
+
+  ewma_alpha: 0.3
+  d0: 0.2
+  u0: 5.0
+  l0: 2.0
+  rho0: 0.1
+  deg0: 8.0
+  ov0: 0.25
+  r0: 0.35
+
+  a_dup: -2.0
+  a_load: -1.5
+  a_lat: 1.5
+  a_churn: 1.0
+  a_deg: -0.4
+  a_ov: -1.2
+  a_red: -1.8
+
+  b_degree: 0.25
+  b_overlap: 0.75
+
+  min_fanout: 1
+  max_fanout: 6
+  mode_threshold: 0.5
+
+  fanout_dup_penalty: 2.0
+  fanout_load_penalty: 0.5
+  fanout_lat_reward: 0.8
+  fanout_red_penalty: 1.5
+
+  tau_max: 0.90
+  tau_min: 0.25
+  tau_dup_penalty: 1.0
+  tau_red_penalty: 1.5
+
+  min_weight: 0.20
+  max_weight: 0.80

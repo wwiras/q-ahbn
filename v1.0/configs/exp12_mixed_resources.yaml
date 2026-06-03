@@ -1,0 +1,110 @@
+experiment: exp12
+seed: 42
+runs_per_setting: 10
+num_nodes: 100
+topology_type: er
+edge_prob: 0.08
+use_topology_cache: true
+message_source: 0
+base_delay: 1.0
+jitter: 0.2
+fanout: 3
+num_clusters: 4
+strategies:
+  - gossip
+  - cluster
+  - ahbn
+resource_scenarios:
+  - balanced
+  - moderate_heterogeneity
+  - weak_heavy
+
+failure:
+  enabled: false
+
+churn:
+  enabled: false
+
+resources:
+  classes:
+    strong:
+      processing_delay: 0.15
+      capacity_score: 1.80
+    medium:
+      processing_delay: 0.50
+      capacity_score: 1.00
+    weak:
+      processing_delay: 1.00
+      capacity_score: 0.55
+
+  profiles:
+    balanced:
+      strong: 0.25
+      medium: 0.50
+      weak: 0.25
+    moderate_heterogeneity:
+      strong: 0.20
+      medium: 0.45
+      weak: 0.35
+    weak_heavy:
+      strong: 0.15
+      medium: 0.35
+      weak: 0.50
+
+ahbn:
+  adaptive_fanout: true
+  hybrid_mode: true
+  use_tau_gate: true
+  default_fanout: 3
+  min_cluster_targets: 1
+  resource_aware_targeting: true
+
+  ewma_alpha: 0.25
+  d0: 0.20
+  u0: 4.0
+  l0: 2.2
+  rho0: 0.0
+  deg0: 8.0
+  ov0: 0.25
+  r0: 0.35
+  c0: 0.35
+
+  a_dup: -2.2
+  a_load: -1.6
+  a_lat: 1.1
+  a_churn: 0.0
+  a_deg: -0.3
+  a_ov: -1.0
+  a_red: -1.6
+  a_cap: -2.0
+
+  b_degree: 0.25
+  b_overlap: 0.75
+
+  min_fanout: 1
+  max_fanout: 5
+  mode_threshold: 0.55
+
+  fanout_dup_penalty: 2.5
+  fanout_load_penalty: 1.0
+  fanout_lat_reward: 0.4
+  fanout_red_penalty: 2.0
+  fanout_cap_penalty: 1.6
+
+  tau_max: 0.85
+  tau_min: 0.25
+  tau_dup_penalty: 1.2
+  tau_red_penalty: 1.6
+  tau_cap_penalty: 0.9
+
+  min_weight: 0.25
+  max_weight: 0.75
+  weight_center_pull: 0.60
+  mode_hysteresis: 0.06
+
+  mode_sensitive_mix: true
+  cluster_mode_bias: 0.80
+  gossip_mode_bias: 0.70
+  preserve_cluster_path_under_tau: true
+  cluster_reserve_in_gossip_mode: 1
+  gossip_reserve_in_cluster_mode: 1

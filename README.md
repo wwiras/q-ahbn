@@ -1,2 +1,2 @@
 # q-ahbn
-Reinforcement Learning for Enhanced AHBN
+Reinforcement Learning for Enhanced AHBN - Python Control Sim

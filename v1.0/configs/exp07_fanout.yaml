@@ -1,0 +1,13 @@
+experiment: exp07
+topology_type: ba
+num_nodes: 100
+ba_m: 3
+seed: 42
+message_source: 0
+fanouts: [2, 3, 4, 5, 6]
+runs_per_setting: 20
+base_delay: 1.0
+jitter: 0.2
+num_clusters: 4
+use_topology_cache: true
+adaptive_fanout: false

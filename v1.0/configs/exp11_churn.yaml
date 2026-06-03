@@ -1,0 +1,200 @@
+experiment: exp11
+seed: 42
+runs_per_setting: 10
+# runs_per_setting: 3
+num_nodes: 100
+topology_type: er
+edge_prob: 0.08
+use_topology_cache: true
+message_source: 0
+base_delay: 1.0
+jitter: 0.2
+fanout: 3
+num_clusters: 4
+strategies:
+  - gossip
+  - cluster
+  - ahbn
+churn_rates:
+  - 0.00
+  - 0.05
+  - 0.10
+  - 0.20
+  - 0.30
+
+failure:
+  enabled: false
+
+churn:
+  enabled: true
+  start_time: 2.0
+  interval: 1.5
+  num_cycles: 4
+  down_time: 2.0
+  target_fraction: 0.10
+  min_targets: 1
+  allow_cluster_heads: true
+  permanent_leave: false
+
+
+# ahbn for special exp11 controller only
+ahbn:
+  adaptive_fanout: true
+  hybrid_mode: true
+  use_tau_gate: true
+  default_fanout: 3
+  min_cluster_targets: 1
+
+  ewma_alpha: 0.20
+
+  d0: 0.25
+  u0: 6.0
+  l0: 2.5
+  rho0: 0.12
+  deg0: 8.0
+  ov0: 0.25
+  r0: 0.40
+
+  a_dup: -2.6
+  a_load: -1.2
+  a_lat: 1.2
+  a_churn: 1.1
+  a_deg: -0.3
+  a_ov: -1.4
+  a_red: -2.2
+
+  b_degree: 0.20
+  b_overlap: 0.80
+
+  min_fanout: 2
+  max_fanout: 5
+  mode_threshold: 0.58
+
+  fanout_dup_penalty: 2.8
+  fanout_load_penalty: 0.8
+  fanout_lat_reward: 0.45
+  fanout_red_penalty: 2.4
+
+  tau_max: 0.82
+  tau_min: 0.30
+  tau_dup_penalty: 1.4
+  tau_red_penalty: 2.0
+
+  min_weight: 0.35
+  max_weight: 0.68
+
+  weight_center_pull: 0.65
+  churn_weight_cap: 0.05
+  mode_hysteresis: 0.08
+  tau_churn_boost: 0.80
+  fanout_churn_boost: 0.80
+
+  mode_sensitive_mix: true
+  cluster_mode_bias: 0.80
+  gossip_mode_bias: 0.75
+  preserve_cluster_path_under_tau: true
+  cluster_reserve_in_gossip_mode: 1
+  gossip_reserve_in_cluster_mode: 1
+
+
+# ahbn with general controller
+# ahbn:
+#   adaptive_fanout: true
+#   hybrid_mode: true
+#   use_tau_gate: true
+#   default_fanout: 3
+#   min_cluster_targets: 1
+
+#   # smoother control
+#   ewma_alpha: 0.20
+
+#   # reference points
+#   d0: 0.25
+#   u0: 6.0
+#   l0: 2.5
+#   rho0: 0.12
+#   deg0: 8.0
+#   ov0: 0.25
+#   r0: 0.40
+
+#   # mode-weight control
+#   # reduce churn domination, increase duplicate/redudancy awareness
+#   a_dup: -2.6
+#   a_load: -1.2
+#   a_lat: 1.2
+#   a_churn: 1.1
+#   a_deg: -0.3
+#   a_ov: -1.4
+#   a_red: -2.2
+
+#   # redundancy proxy mix
+#   b_degree: 0.20
+#   b_overlap: 0.80
+
+#   # fanout bounds
+#   min_fanout: 2
+#   max_fanout: 5
+
+#   # harder to collapse into gossip
+#   mode_threshold: 0.62
+
+#   # stronger fanout penalties, weaker latency reward
+#   fanout_dup_penalty: 2.8
+#   fanout_load_penalty: 0.8
+#   fanout_lat_reward: 0.45
+#   fanout_red_penalty: 2.4
+
+#   # tau gating: allow hybrid use, but penalize redundancy
+#   tau_max: 0.82
+#   tau_min: 0.30
+#   tau_dup_penalty: 1.4
+#   tau_red_penalty: 2.0
+
+#   # keep weights away from extremes
+#   min_weight: 0.35
+#   max_weight: 0.68
+
+
+# outputs/csv/exp11_results_20260417_212755.csv
+# ahbn:
+#   adaptive_fanout: true
+#   hybrid_mode: true
+#   use_tau_gate: true
+#   default_fanout: 3
+#   min_cluster_targets: 1
+
+#   ewma_alpha: 0.3
+#   d0: 0.20
+#   u0: 5.0
+#   l0: 2.0
+#   rho0: 0.10
+#   deg0: 8.0
+#   ov0: 0.25
+#   r0: 0.35
+
+#   a_dup: -2.0
+#   a_load: -1.5
+#   a_lat: 1.5
+#   a_churn: 2.2
+#   a_deg: -0.4
+#   a_ov: -1.2
+#   a_red: -1.8
+
+#   b_degree: 0.25
+#   b_overlap: 0.75
+
+#   min_fanout: 1
+#   max_fanout: 6
+#   mode_threshold: 0.5
+#   fanout_dup_penalty: 2.0
+#   fanout_load_penalty: 0.5
+#   fanout_lat_reward: 0.8
+#   fanout_red_penalty: 1.5
+
+#   tau_max: 0.90
+#   tau_min: 0.25
+#   tau_dup_penalty: 1.0
+#   tau_red_penalty: 1.5
+
+#   min_weight: 0.20
+#   max_weight: 0.80

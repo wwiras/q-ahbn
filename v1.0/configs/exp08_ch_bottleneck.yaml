@@ -1,0 +1,24 @@
+# experiment: exp08
+# num_nodes: 100
+# edge_prob: 0.06
+# num_clusters: 4
+# seed: 42
+# message_source: 0
+# runs_per_setting: 20
+# base_delay: 1.0
+# jitter: 0.2
+# ch_overload_factor: [1.0, 1.5, 2.0, 3.0]
+
+
+experiment: exp08
+topology_type: ba
+num_nodes: 100
+ba_m: 3
+num_clusters: 4
+seed: 42
+message_source: 0
+runs_per_setting: 20
+base_delay: 1.0
+jitter: 0.2
+ch_overload_factor: [1.0, 1.5, 2.0, 3.0]
+use_topology_cache: true
