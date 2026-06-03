@@ -11,6 +11,7 @@ from ahbn.control_exp12 import AHBNParams as AHBNParamsExp12
 from ahbn.churn_manager import ChurnManager
 from ahbn.failure_injector import FailureInjector
 from ahbn.simulator import Simulator
+from ahbn.q_learning import QAHBNController
 from ahbn.strategies.ahbn import AHBNStrategy
 from ahbn.strategies.cluster import ClusterStrategy
 from ahbn.strategies.gossip import GossipStrategy
@@ -247,6 +248,20 @@ def run_single(
         controller = select_ahbn_controller(cfg)
         strategy = build_ahbn_strategy(cfg, fanout=fanout)
 
+    elif strategy_name == "qahbn":
+        cluster_manager = assign_static_clusters(
+            nodes,
+            num_clusters=num_clusters or 4,
+            resource_aware_heads=(experiment_name == "exp12"),
+        )
+        base_controller = select_ahbn_controller(cfg)
+        controller = QAHBNController(
+            base_controller=base_controller,
+            cfg=cfg.get("q_learning", {}),
+            seed=seed,
+        )
+        strategy = build_ahbn_strategy(cfg, fanout=fanout)
+
     elif strategy_name == "hybrid_fixed":
         cluster_manager = assign_static_clusters(nodes, num_clusters=num_clusters or 4)
         strategy = HybridFixedStrategy(fanout=fanout if fanout is not None else 3)
@@ -287,7 +302,7 @@ def run_single(
             else (failure_mode if failure_mode is not None else topology_type)
         ),
         enable_adaptive_trace=enable_adaptive_trace,
-        resource_aware_heads=(experiment_name == "exp12" and strategy_name == "ahbn"),
+        resource_aware_heads=(experiment_name == "exp12" and strategy_name in ["ahbn", "qahbn"]),
     )
 
     sim.inject_message(source_id=message_source, message_id="m1")
@@ -295,6 +310,8 @@ def run_single(
 
     summary = sim.metrics.summarize_message("m1", total_nodes=len(sim.nodes))
     summary.update(sim.get_resource_metrics())
+    if hasattr(controller, "get_learning_summary"):
+        summary.update(controller.get_learning_summary())
     if enable_adaptive_trace:
         summary["adaptive_trace_rows"] = sim.adaptive_trace_rows
     return summary
@@ -522,7 +539,7 @@ def exp10(cfg: dict) -> tuple[list[dict], list]:
                     edge_prob=edge_prob,
                     ba_m=ba_m,
                     failure_mode=failure_mode,
-                    enable_adaptive_trace=(strategy_name == "ahbn"),
+                    enable_adaptive_trace=(strategy_name in ["ahbn", "qahbn"]),
                 )
 
                 rows.append(
@@ -543,6 +560,13 @@ def exp10(cfg: dict) -> tuple[list[dict], list]:
                         "duplicates": summary["duplicates"],
                         "total_forwards": summary["total_forwards"],
                         "recovery_time": summary["recovery_time"],
+                        "q_table_states": summary.get("q_table_states"),
+                        "q_updates": summary.get("q_updates"),
+                        "q_mean_reward": summary.get("q_mean_reward"),
+                        "q_recent_reward": summary.get("q_recent_reward"),
+                        "q_cumulative_reward": summary.get("q_cumulative_reward"),
+                        "q_epsilon_final": summary.get("q_epsilon_final"),
+                        "q_unique_actions": summary.get("q_unique_actions"),
                     }
                 )
 
@@ -594,7 +618,7 @@ def exp11(cfg: dict) -> tuple[list[dict], list]:
                     edge_prob=edge_prob,
                     ba_m=ba_m,
                     churn_rate=churn_rate,
-                    enable_adaptive_trace=(strategy_name == "ahbn"),
+                    enable_adaptive_trace=(strategy_name in ["ahbn", "qahbn"]),
                 )
 
                 rows.append(
@@ -620,6 +644,13 @@ def exp11(cfg: dict) -> tuple[list[dict], list]:
                         "fanout_change_count": summary["fanout_change_count"],
                         "adaptation_event_count": summary["adaptation_event_count"],
                         "adaptation_rate": summary["adaptation_rate"],
+                        "q_table_states": summary.get("q_table_states"),
+                        "q_updates": summary.get("q_updates"),
+                        "q_mean_reward": summary.get("q_mean_reward"),
+                        "q_recent_reward": summary.get("q_recent_reward"),
+                        "q_cumulative_reward": summary.get("q_cumulative_reward"),
+                        "q_epsilon_final": summary.get("q_epsilon_final"),
+                        "q_unique_actions": summary.get("q_unique_actions"),
                     }
                 )
 
@@ -671,7 +702,7 @@ def exp12(cfg: dict) -> tuple[list[dict], list]:
                     edge_prob=edge_prob,
                     ba_m=ba_m,
                     resource_scenario=resource_scenario,
-                    enable_adaptive_trace=(strategy_name == "ahbn"),
+                    enable_adaptive_trace=(strategy_name in ["ahbn", "qahbn"]),
                 )
 
                 rows.append(
@@ -694,6 +725,13 @@ def exp12(cfg: dict) -> tuple[list[dict], list]:
                         "strong_forward_share": summary["strong_forward_share"],
                         "medium_forward_share": summary["medium_forward_share"],
                         "weak_forward_share": summary["weak_forward_share"],
+                        "q_table_states": summary.get("q_table_states"),
+                        "q_updates": summary.get("q_updates"),
+                        "q_mean_reward": summary.get("q_mean_reward"),
+                        "q_recent_reward": summary.get("q_recent_reward"),
+                        "q_cumulative_reward": summary.get("q_cumulative_reward"),
+                        "q_epsilon_final": summary.get("q_epsilon_final"),
+                        "q_unique_actions": summary.get("q_unique_actions"),
                     }
                 )
 
