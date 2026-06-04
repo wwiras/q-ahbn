@@ -119,3 +119,4 @@ q_learning:
   w_capacity: 0.20
 
   w_recovery_bonus: 2.00
+  w_forwarding: 0.50

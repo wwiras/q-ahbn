@@ -49,6 +49,7 @@ class QAHBNController:
         self.w_redundancy: float = float(self.cfg.get("w_redundancy", 0.20))
         self.w_churn: float = float(self.cfg.get("w_churn", 0.20))
         self.w_capacity: float = float(self.cfg.get("w_capacity", 0.20))
+        self.w_forwarding = float(self.cfg.get("w_forwarding", 0.50))
 
         # Bonus terms for unstable situations.
         self.w_recovery_bonus: float = float(self.cfg.get("w_recovery_bonus", 2.00))
@@ -186,6 +187,18 @@ class QAHBNController:
         red = min(2.0, max(0.0, float(state.r_hat)))
         churn = min(2.0, max(0.0, float(state.rho_hat)))
         cap = min(2.0, max(0.0, float(getattr(state, "c_hat", 0.0))))
+        
+        # fanout_norm = (
+        #     float(state.fanout) /
+        #     max(1.0, self.params.max_fanout)
+        # )
+        
+        fanout_norm = min(
+            1.0,
+            max(0.0, float(state.fanout) / max(1.0, float(self.params.max_fanout)))
+        )
+        
+        
 
         # Local delivery proxy:
         # If duplication is low and latency is controlled, dissemination is likely healthier.
@@ -195,8 +208,19 @@ class QAHBNController:
         # When churn or latency is high, the system should avoid becoming too conservative.
         recovery_pressure = min(1.0, 0.5 * min(1.0, lat) + 0.5 * min(1.0, churn))
 
+        # reward = (
+        #     self.w_delivery_proxy * delivery_proxy
+        #     - self.w_dup * dup
+        #     - self.w_latency * lat
+        #     - self.w_load * load
+        #     - self.w_redundancy * red
+        #     - self.w_churn * churn
+        #     - self.w_capacity * cap
+        # )
+        
         reward = (
-            self.w_delivery_proxy * delivery_proxy
+            self.w_delivery_proxy * delivery_proxy 
+            + self.w_forwarding * fanout_norm
             - self.w_dup * dup
             - self.w_latency * lat
             - self.w_load * load
