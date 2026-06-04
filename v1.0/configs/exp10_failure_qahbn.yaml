@@ -88,16 +88,34 @@ ahbn:
   min_weight: 0.20
   max_weight: 0.80
 
+# q_learning:
+#   alpha: 0.25
+#   gamma: 0.90
+#   epsilon: 0.30
+#   epsilon_min: 0.03
+#   epsilon_decay: 0.995
+#   w_dup: 2.00
+#   w_latency: 0.75
+#   w_load: 0.35
+#   w_redundancy: 1.00
+#   w_churn: 0.30
+#   w_capacity: 0.35
+#   w_delivery_proxy: 0.50
+
 q_learning:
   alpha: 0.25
   gamma: 0.90
   epsilon: 0.30
   epsilon_min: 0.03
   epsilon_decay: 0.995
-  w_dup: 2.00
-  w_latency: 0.75
-  w_load: 0.35
-  w_redundancy: 1.00
-  w_churn: 0.30
-  w_capacity: 0.35
-  w_delivery_proxy: 0.50
+
+  w_delivery_proxy: 5.00
+  w_dup: 0.50
+  w_latency: 0.30
+  w_load: 0.20
+
+  w_redundancy: 0.20
+  w_churn: 0.20
+  w_capacity: 0.20
+
+  w_recovery_bonus: 2.00
