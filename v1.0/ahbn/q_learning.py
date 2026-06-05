@@ -64,7 +64,8 @@ class QAHBNController:
             QAction("ahbn_base", fanout_delta=0, weight_delta=0.00, tau_multiplier=1.00),
             QAction("more_structured", fanout_delta=-1, weight_delta=-0.12, tau_multiplier=0.90),
             QAction("more_gossip", fanout_delta=1, weight_delta=0.12, tau_multiplier=1.08),
-            QAction("duplicate_suppression", fanout_delta=-1, weight_delta=-0.18, tau_multiplier=0.75),
+            # QAction("duplicate_suppression", fanout_delta=-1, weight_delta=-0.18, tau_multiplier=0.75),
+            QAction("duplicate_suppression",fanout_delta=0,weight_delta=-0.08,tau_multiplier=0.95),
             QAction("recovery_push", fanout_delta=1, weight_delta=0.18, tau_multiplier=1.15),
             QAction("resource_conservative", fanout_delta=-1, weight_delta=-0.10, tau_multiplier=0.85),
         ]
@@ -193,16 +194,21 @@ class QAHBNController:
         #     max(1.0, self.params.max_fanout)
         # )
         
-        fanout_norm = min(
-            1.0,
-            max(0.0, float(state.fanout) / max(1.0, float(self.params.max_fanout)))
-        )
+        # fanout_norm = min(
+        #     1.0,
+        #     max(0.0, float(state.fanout) / max(1.0, float(self.params.max_fanout)))
+        # )
         
         
 
         # Local delivery proxy:
         # If duplication is low and latency is controlled, dissemination is likely healthier.
-        delivery_proxy = max(0.0, 1.0 - (0.50 * dup + 0.35 * min(1.0, lat) + 0.15 * min(1.0, churn)))
+        # delivery_proxy = max(0.0, 1.0 - (0.50 * dup + 0.35 * min(1.0, lat) + 0.15 * min(1.0, churn)))
+        
+        delivery_estimate = min(
+            1.0,
+            max(0.0, float(getattr(state, "delivery_estimate", 0.0)))
+        )
 
         # Recovery pressure:
         # When churn or latency is high, the system should avoid becoming too conservative.
@@ -218,9 +224,19 @@ class QAHBNController:
         #     - self.w_capacity * cap
         # )
         
+        # reward = (
+        #     self.w_delivery_proxy * delivery_proxy 
+        #     + self.w_forwarding * fanout_norm
+        #     - self.w_dup * dup
+        #     - self.w_latency * lat
+        #     - self.w_load * load
+        #     - self.w_redundancy * red
+        #     - self.w_churn * churn
+        #     - self.w_capacity * cap
+        # )
+        
         reward = (
-            self.w_delivery_proxy * delivery_proxy 
-            + self.w_forwarding * fanout_norm
+            self.w_delivery_proxy * delivery_estimate
             - self.w_dup * dup
             - self.w_latency * lat
             - self.w_load * load

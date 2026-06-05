@@ -1,7 +1,8 @@
 experiment: exp10
 
 seed: 42
-runs_per_setting: 20
+# runs_per_setting: 20
+runs_per_setting: 50
 
 num_nodes: 100
 topology_type: er

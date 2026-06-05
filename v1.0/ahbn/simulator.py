@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import heapq
 import math
 import random
@@ -190,6 +189,18 @@ class Simulator:
 
         total_recv = node.stats.received_new + node.stats.received_duplicate
         duplicate_ratio = node.stats.received_duplicate / total_recv if total_recv > 0 else 0.0
+        
+        delivery_estimate_raw = (
+            node.stats.received_new /
+            (node.stats.received_new + node.stats.received_duplicate + 1e-6)
+        )
+
+        node.control.delivery_estimate = (
+            0.3 * delivery_estimate_raw
+            + 0.7 * getattr(node.control, "delivery_estimate", 0.0)
+        )
+        
+        
         load_proxy = float(node.stats.forwarded) / max(0.25, node.capacity_score)
         latency_proxy = receive_lag
         degree_proxy = float(self.get_node_degree(node))

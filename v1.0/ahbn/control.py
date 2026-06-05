@@ -18,6 +18,7 @@ class NodeControlState:
     weight: float = 1.0
     fanout: int = 3
     tau: float = 1.0
+    delivery_estimate: float = 0.0
 
 
 @dataclass
