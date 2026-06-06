@@ -10,3 +10,4 @@ This scaffold supports RO3 plain Python experiments:
 
 ```bash
 pip install -r requirements.txt
+```
