@@ -299,7 +299,11 @@ def run_single(
         scenario_tag=(
             resource_scenario
             if resource_scenario is not None
-            else (failure_mode if failure_mode is not None else topology_type)
+            else (
+                f"churn_{churn_rate:.2f}"
+                if churn_rate is not None
+                else (failure_mode if failure_mode is not None else topology_type)
+            )
         ),
         enable_adaptive_trace=enable_adaptive_trace,
         resource_aware_heads=(experiment_name == "exp12" and strategy_name in ["ahbn", "qahbn"]),
@@ -652,6 +656,7 @@ def exp11(cfg: dict) -> tuple[list[dict], list]:
 
     strategies = cfg.get("strategies", ["gossip", "cluster", "ahbn"])
     churn_rates = cfg.get("churn_rates", [0.0, 0.05, 0.10, 0.20, 0.30])
+    churn_start_time = float(cfg.get("churn", {}).get("start_time", 0.0))
 
     for churn_rate in churn_rates:
         for run_idx in range(runs_per_setting):
@@ -689,6 +694,10 @@ def exp11(cfg: dict) -> tuple[list[dict], list]:
                         "churn_rate": churn_rate,
                         "delivery_ratio": summary["delivery_ratio"],
                         "propagation_delay": summary["propagation_delay"],
+                        "churn_recovery_time": max(
+                            0.0,
+                            float(summary["propagation_delay"] or 0.0) - churn_start_time,
+                        ),
                         "duplicates": summary["duplicates"],
                         "total_forwards": summary["total_forwards"],
                         "churn_event_count": summary["churn_event_count"],
