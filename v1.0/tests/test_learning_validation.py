@@ -16,7 +16,8 @@ from ahbn.q_learning import QAHBNController
 
 
 # EPISODES = 200
-EPISODES = 500
+# EPISODES = 500
+EPISODES = 1000
 
 
 # def create_state(ep: int) -> NodeControlState:
