@@ -1,23 +1,23 @@
 ```bash
-% python -m tests.test_action_selection
+% python -m tests.test_learning_validation
 
 ==============================
-ACTION SELECTION TEST
+Q-AHBN LEARNING VALIDATION
 ==============================
+Episodes            : 500
+Q Updates           : 486
+States Learned      : 233
+Mean Reward         : 3.181
+Recent Reward       : 3.183
+Final Epsilon       : 0.030
 
-State = ('M', 'L', 'L', 'L', 'L', 'L')
+ACTION DISTRIBUTION
+more_structured            113
+ahbn_base                   88
+resource_conservative       86
+duplicate_suppression       82
+more_gossip                 76
+recovery_push               55
 
-Q-values
-ahbn_base                = 0.500
-more_structured          = 1.200
-more_gossip              = 3.500
-duplicate_suppression    = 0.800
-recovery_push            = 2.100
-resource_conservative    = 0.300
-
-Selected Action = more_gossip
-
-RESULT
-PASS: Policy selected highest-Q action.
-
+CSV Written: outputs/csv/learning_trace_20260616_183205.csv
 ```

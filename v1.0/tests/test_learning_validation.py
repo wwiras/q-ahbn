@@ -4,6 +4,7 @@ from collections import Counter
 import csv
 from pathlib import Path
 from datetime import datetime
+import random
 
 from ahbn.control import (
     AHBNController,
@@ -14,56 +15,68 @@ from ahbn.control import (
 from ahbn.q_learning import QAHBNController
 
 
-EPISODES = 200
+# EPISODES = 200
+EPISODES = 500
+
+
+# def create_state(ep: int) -> NodeControlState:
+#     """
+#     Simulated environment.
+
+#     Early episodes:
+#         poor network conditions
+
+#     Later episodes:
+#         mixed conditions
+
+#     Allows Q-learning to discover
+#     better actions over time.
+#     """
+
+#     if ep < 50:
+#         return NodeControlState(
+#             d_hat=0.60,
+#             u_hat=4.0,
+#             l_hat=3.0,
+#             rho_hat=0.40,
+#             r_hat=0.60,
+#             c_hat=0.50,
+#             delivery_estimate=0.20,
+#         )
+
+#     elif ep < 100:
+#         return NodeControlState(
+#             d_hat=0.40,
+#             u_hat=2.5,
+#             l_hat=2.0,
+#             rho_hat=0.25,
+#             r_hat=0.40,
+#             c_hat=0.30,
+#             delivery_estimate=0.50,
+#         )
+
+#     else:
+#         return NodeControlState(
+#             d_hat=0.10,
+#             u_hat=1.0,
+#             l_hat=1.0,
+#             rho_hat=0.05,
+#             r_hat=0.10,
+#             c_hat=0.10,
+#             delivery_estimate=0.90,
+#         )
 
 
 def create_state(ep: int) -> NodeControlState:
-    """
-    Simulated environment.
-
-    Early episodes:
-        poor network conditions
-
-    Later episodes:
-        mixed conditions
-
-    Allows Q-learning to discover
-    better actions over time.
-    """
-
-    if ep < 50:
-        return NodeControlState(
-            d_hat=0.60,
-            u_hat=4.0,
-            l_hat=3.0,
-            rho_hat=0.40,
-            r_hat=0.60,
-            c_hat=0.50,
-            delivery_estimate=0.20,
-        )
-
-    elif ep < 100:
-        return NodeControlState(
-            d_hat=0.40,
-            u_hat=2.5,
-            l_hat=2.0,
-            rho_hat=0.25,
-            r_hat=0.40,
-            c_hat=0.30,
-            delivery_estimate=0.50,
-        )
-
-    else:
-        return NodeControlState(
-            d_hat=0.10,
-            u_hat=1.0,
-            l_hat=1.0,
-            rho_hat=0.05,
-            r_hat=0.10,
-            c_hat=0.10,
-            delivery_estimate=0.90,
-        )
-
+    return NodeControlState(
+        d_hat=random.uniform(0.0, 1.0),
+        u_hat=random.uniform(0.5, 8.0),
+        l_hat=random.uniform(0.5, 5.0),
+        rho_hat=random.uniform(0.0, 1.0),
+        r_hat=random.uniform(0.0, 1.0),
+        c_hat=random.uniform(0.0, 1.0),
+        delivery_estimate=random.uniform(0.2, 1.0),
+)
 
 def main():
 
