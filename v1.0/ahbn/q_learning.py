@@ -6,7 +6,8 @@ from dataclasses import dataclass
 from typing import Any, DefaultDict, Dict, List, Tuple
 
 
-StateKey = Tuple[str, str, str, str, str, str]
+# StateKey = Tuple[str, str, str, str, str, str]
+StateKey = Tuple[str, str, str, str, str, str, str]
 ActionName = str
 
 
@@ -52,7 +53,8 @@ class QAHBNController:
         self.w_forwarding = float(self.cfg.get("w_forwarding", 0.50))
 
         # Bonus terms for unstable situations.
-        self.w_recovery_bonus: float = float(self.cfg.get("w_recovery_bonus", 2.00))
+        # self.w_recovery_bonus: float = float(self.cfg.get("w_recovery_bonus", 2.00))
+        self.w_recovery_bonus: float = float(self.cfg.get("w_recovery_bonus", 4.00))
         self.high_churn_threshold: float = float(self.cfg.get("high_churn_threshold", 0.20))
         self.high_latency_threshold: float = float(self.cfg.get("high_latency_threshold", 1.20))
 
@@ -148,14 +150,46 @@ class QAHBNController:
         return "H"
 
     def discretize_state(self, state) -> StateKey:
+        
+        failure_phase = "N"
+
+        if float(state.l_hat) > self.params.l0 * 1.75:
+            failure_phase = "F"
+
+        elif float(state.l_hat) > self.params.l0 * 1.25:
+            failure_phase = "R"
+
         return (
             self.bucket3(float(state.d_hat), 0.10, 0.35),
-            self.bucket3(float(state.l_hat), self.params.l0 * 0.75, self.params.l0 * 1.50),
-            self.bucket3(float(state.u_hat), self.params.u0 * 0.50, self.params.u0 * 1.25),
-            self.bucket3(float(state.rho_hat), self.params.rho0 * 0.75, max(0.20, self.params.rho0 * 1.75)),
-            self.bucket3(float(state.r_hat), self.params.r0 * 0.75, self.params.r0 * 1.50),
-            self.bucket3(float(getattr(state, "c_hat", 0.0)), 0.20, 0.65),
+            self.bucket3(float(state.l_hat),
+                        self.params.l0 * 0.75,
+                        self.params.l0 * 1.50),
+            self.bucket3(float(state.u_hat),
+                        self.params.u0 * 0.50,
+                        self.params.u0 * 1.25),
+            self.bucket3(float(state.rho_hat),
+                        self.params.rho0 * 0.75,
+                        max(0.20, self.params.rho0 * 1.75)),
+            self.bucket3(float(state.r_hat),
+                        self.params.r0 * 0.75,
+                        self.params.r0 * 1.50),
+            self.bucket3(float(getattr(state, "c_hat", 0.0)),
+                        0.20,
+                        0.65),
+
+            failure_phase,
         )
+        
+        # return (
+        #     self.bucket3(float(state.d_hat), 0.10, 0.35),
+        #     self.bucket3(float(state.l_hat), self.params.l0 * 0.75, self.params.l0 * 1.50),
+        #     self.bucket3(float(state.u_hat), self.params.u0 * 0.50, self.params.u0 * 1.25),
+        #     self.bucket3(float(state.rho_hat), self.params.rho0 * 0.75, max(0.20, self.params.rho0 * 1.75)),
+        #     self.bucket3(float(state.r_hat), self.params.r0 * 0.75, self.params.r0 * 1.50),
+        #     self.bucket3(float(getattr(state, "c_hat", 0.0)), 0.20, 0.65),
+        # )
+        
+        
 
     def choose_action(self, s: StateKey) -> ActionName:
         if self.rng.random() < self.epsilon:
@@ -299,6 +333,8 @@ class QAHBNController:
             "q_cumulative_reward": cumulative_reward,
             "q_epsilon_final": self.epsilon,
             "q_unique_actions": len(counts),
+            "q_state_examples": list(self.q_table.keys())[:20],
+            "q_state_count": len(self.q_table),
 
             # Raw action counts
             "q_ahbn_base": counts.get("ahbn_base", 0),
