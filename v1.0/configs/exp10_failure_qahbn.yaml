@@ -1,7 +1,6 @@
 experiment: exp10
 
 seed: 42
-# runs_per_setting: 20
 runs_per_setting: 50
 
 num_nodes: 100
@@ -17,8 +16,6 @@ fanout: 3
 num_clusters: 4
 
 strategies:
-  - gossip
-  - cluster
   - ahbn
   - qahbn
 
@@ -26,15 +23,6 @@ failure_modes:
   - node_failure
   - ch_failure
   - overload
-
-# failure:
-#   enabled: true
-#   mode: node_failure
-#   trigger_time: 3.0
-#   target_selection: random
-#   target_count: 1
-#   overload_delay_multiplier: 3.0
-#   overload_duration: 0.0
 
 failure:
   enabled: true
@@ -89,20 +77,6 @@ ahbn:
   min_weight: 0.20
   max_weight: 0.80
 
-# q_learning:
-#   alpha: 0.25
-#   gamma: 0.90
-#   epsilon: 0.30
-#   epsilon_min: 0.03
-#   epsilon_decay: 0.995
-#   w_dup: 2.00
-#   w_latency: 0.75
-#   w_load: 0.35
-#   w_redundancy: 1.00
-#   w_churn: 0.30
-#   w_capacity: 0.35
-#   w_delivery_proxy: 0.50
-
 q_learning:
   alpha: 0.25
   gamma: 0.90
@@ -114,10 +88,20 @@ q_learning:
   w_dup: 0.50
   w_latency: 0.30
   w_load: 0.20
-
   w_redundancy: 0.20
   w_churn: 0.20
   w_capacity: 0.20
-
   w_recovery_bonus: 2.00
-  w_forwarding: 0.50
+
+output:
+  results_csv: outputs/csv/exp10_results.csv
+  adaptive_trace_csv: outputs/csv/exp10_adaptive_trace.csv
+
+  summary_table: outputs/tables/table10_exp10_failure_summary.csv
+  paper_table: outputs/tables/table10_exp10_failure_paper_ready.csv
+
+  recovery_figure: outputs/figures/fig09_recovery_time_comparison.png
+  duplicates_figure: outputs/figures/fig10_duplicates_comparison.png
+  delivery_figure: outputs/figures/fig11_delivery_comparison.png
+
+  adaptation_efficiency_figure: outputs/figures/fig21_adaptation_efficiency_failure.png
