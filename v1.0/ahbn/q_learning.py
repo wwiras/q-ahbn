@@ -43,13 +43,20 @@ class QAHBNController:
         # Reward weights.
         # Important change:
         # Delivery / recovery pressure is now stronger than duplicate suppression.
-        self.w_delivery_proxy: float = float(self.cfg.get("w_delivery_proxy", 5.00))
-        self.w_dup: float = float(self.cfg.get("w_dup", 0.50))
-        self.w_latency: float = float(self.cfg.get("w_latency", 0.30))
-        self.w_load: float = float(self.cfg.get("w_load", 0.20))
-        self.w_redundancy: float = float(self.cfg.get("w_redundancy", 0.20))
-        self.w_churn: float = float(self.cfg.get("w_churn", 0.20))
-        self.w_capacity: float = float(self.cfg.get("w_capacity", 0.20))
+        # self.w_delivery_proxy: float = float(self.cfg.get("w_delivery_proxy", 5.00))
+        self.w_delivery_proxy: float = float(self.cfg.get("w_delivery_proxy", 15.0))
+        # self.w_dup: float = float(self.cfg.get("w_dup", 0.50))
+        self.w_dup: float = float(self.cfg.get("w_dup", 0.15))
+        # self.w_latency: float = float(self.cfg.get("w_latency", 0.30))
+        self.w_latency: float = float(self.cfg.get("w_latency", 0.10))
+        # self.w_load: float = float(self.cfg.get("w_load", 0.20))
+        self.w_load: float = float(self.cfg.get("w_load", 0.05))
+        # self.w_redundancy: float = float(self.cfg.get("w_redundancy", 0.20))
+        self.w_redundancy: float = float(self.cfg.get("w_redundancy", 0.05))
+        # self.w_churn: float = float(self.cfg.get("w_churn", 0.20))
+        self.w_churn: float = float(self.cfg.get("w_churn", 0.05))
+        # self.w_capacity: float = float(self.cfg.get("w_capacity", 0.20))
+        self.w_capacity: float = float(self.cfg.get("w_capacity", 0.05))
         self.w_forwarding = float(self.cfg.get("w_forwarding", 0.50))
 
         # Bonus terms for unstable situations.
@@ -69,7 +76,8 @@ class QAHBNController:
             # QAction("duplicate_suppression", fanout_delta=-1, weight_delta=-0.18, tau_multiplier=0.75),
             QAction("duplicate_suppression",fanout_delta=0,weight_delta=-0.08,tau_multiplier=0.95),
             QAction("recovery_push", fanout_delta=1, weight_delta=0.18, tau_multiplier=1.15),
-            QAction("resource_conservative", fanout_delta=-1, weight_delta=-0.10, tau_multiplier=0.85),
+            # QAction("resource_conservative", fanout_delta=-1, weight_delta=-0.10, tau_multiplier=0.85),
+            QAction("resource_conservative", fanout_delta=-0, weight_delta=-0.05, tau_multiplier=0.95),
         ]
 
         self.q_table: DefaultDict[StateKey, Dict[ActionName, float]] = defaultdict(
@@ -278,6 +286,10 @@ class QAHBNController:
             - self.w_churn * churn
             - self.w_capacity * cap
         )
+        
+        # Strong penalty for poor delivery
+        if delivery_estimate < 0.90:
+            reward -= 5.0
 
         # Bonus under dynamic conditions.
         # This encourages the learner to maintain dissemination capability during failure/churn.
