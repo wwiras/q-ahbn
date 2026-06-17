@@ -288,8 +288,11 @@ class QAHBNController:
         )
         
         # Strong penalty for poor delivery
-        if delivery_estimate < 0.90:
-            reward -= 5.0
+        # if delivery_estimate < 0.90:
+        #     reward -= 5.0
+        if delivery_estimate < 0.80:
+            reward -= 2.0
+            
 
         # Bonus under dynamic conditions.
         # This encourages the learner to maintain dissemination capability during failure/churn.
