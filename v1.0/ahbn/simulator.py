@@ -73,7 +73,11 @@ class Simulator:
         src = self.nodes[src_id]
         dst = self.nodes[dst_id]
 
-        if not src.is_active or not dst.is_active:
+        if not src.is_active:
+            return
+
+        if not dst.is_active:
+            self.record_forward_outcome(now, src_id, dst_id, message, "FAILED")
             return
 
         extra = 0.0
