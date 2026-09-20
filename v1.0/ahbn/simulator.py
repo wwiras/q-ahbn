@@ -32,6 +32,7 @@ class Simulator:
         scenario_tag: str = "default",
         enable_adaptive_trace: bool = False,
         resource_aware_heads: bool = False,
+        enable_forward_outcome_observer: bool = False,
     ) -> None:
         self.nodes = nodes
         self.strategy = strategy
@@ -56,6 +57,11 @@ class Simulator:
         self.scenario_tag = scenario_tag
         self.enable_adaptive_trace = enable_adaptive_trace
         self.adaptive_trace_rows: list[AdaptiveTraceRow] = []
+
+        # Q-AHBN2 02.5.1: observation-only forwarding outcome trace.
+        # This must not schedule events, consume RNG, or alter protocol/controller state.
+        self.enable_forward_outcome_observer = enable_forward_outcome_observer
+        self.forward_outcome_rows: list[dict] = []
 
         if self.churn_manager is not None:
             self.churn_manager.schedule_events(self)
@@ -245,6 +251,20 @@ class Simulator:
                 event_type="churn_control_update",
             )
 
+    def record_forward_outcome(self, now: float, src_id: int, dst_id: int, message: Message, outcome: str) -> None:
+        """Record receiver outcome for an existing forwarding interaction only."""
+        if not self.enable_forward_outcome_observer or src_id == dst_id:
+            return
+        self.forward_outcome_rows.append(
+            {
+                "time": now,
+                "src_id": src_id,
+                "dst_id": dst_id,
+                "message_id": message.message_id,
+                "outcome": outcome,
+            }
+        )
+
     def handle_receive(self, now: float, dst_id: int, src_id: int, message: Message) -> None:
         self.clock = now
         node = self.nodes[dst_id]
@@ -252,6 +272,7 @@ class Simulator:
             return
 
         if node.has_seen(message.message_id):
+            self.record_forward_outcome(now, src_id, dst_id, message, "DUPLICATE")
             node.stats.received_duplicate += 1
             self.metrics.record_duplicate(message.message_id)
             self.update_ahbn_state(node, now, now - message.created_at)
@@ -259,6 +280,7 @@ class Simulator:
             return
 
         node.mark_seen(message.message_id)
+        self.record_forward_outcome(now, src_id, dst_id, message, "NEW")
         node.stats.received_new += 1
         node.stats.first_receive_time.setdefault(message.message_id, now)
         node.stats.last_receive_time[message.message_id] = now
