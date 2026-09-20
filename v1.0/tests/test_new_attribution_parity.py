@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import copy
-import random
 import unittest
 
 from ahbn.message import Message
@@ -56,10 +55,18 @@ def scientific_snapshot(sim: Simulator) -> dict:
 
 def run_microcase(observer: bool):
     sim = make_sim(observer)
-    msg = Message(message_id="m1", source_id=0, created_at=0.0)
+    # Use the simulator's normal injection path so MetricsCollector knows m1.
+    sim.inject_message(source_id=0, message_id="m1")
+    injection = sim.queue.pop()
+    msg = injection.payload["message"]
 
     # Source injection: must never be attributed as a forwarding action.
-    sim.handle_receive(now=0.0, dst_id=0, src_id=0, message=msg)
+    sim.handle_receive(
+        now=injection.time,
+        dst_id=injection.payload["dst_id"],
+        src_id=injection.payload["src_id"],
+        message=msg,
+    )
 
     # Deterministic controlled forwarding interactions.
     sim.handle_receive(now=1.0, dst_id=1, src_id=0, message=msg)
